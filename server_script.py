@@ -8,6 +8,7 @@ FORMAT = "utf-8"
 
 servidor = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 servidor.bind(ADDR)
+servidor.listen(2)
 
 
 class Pokemon:
@@ -30,6 +31,12 @@ class Jogador:
     def set_nome(self, nome):
         self.nome = nome
 
+    def define_pokemons(self):
+        pokemons_msg = self.socket.recv(1024).decode(FORMAT)
+        pokemons = pokemons_msg.split("|")[1]
+        print(f"Pokémons escolhidos por {self.nome}: {pokemons}")
+        self.pokemons = pokemons
+
 
 def get_jogador_info(jogador):
     nome_msg = jogador.socket.recv(1024).decode(FORMAT)
@@ -38,18 +45,11 @@ def get_jogador_info(jogador):
     print(f"Jogador conectado: {jogador.nome}")
 
 
-def define_pokemons(jogador):
-    pokemons_msg = jogador.socket.recv(1024).decode(FORMAT)
-    pokemons = pokemons_msg.split("|")[1]
-    print(f"Pokémons escolhidos por {jogador.nome}: {pokemons}")
-    jogador.pokemons = pokemons
-
-
 def main():
-    servidor.listen(2)
     print(f"Servidor rodando em {SERVER_IP}:{SERVER_PORT}")
     num_conexoes = 0
-    while True:
+
+    while num_conexoes < 2:
         socket_cliente, endereco_cliente = servidor.accept()
         num_conexoes += 1
 
@@ -58,7 +58,7 @@ def main():
             jogador1_thread = threading.Thread(target=get_jogador_info(
                 jogador1), args=(jogador1, socket_cliente))
             jogador1_thread.start()
-            define_pokemons(jogador1)
+
 
         else:
             jogador2 = Jogador(socket_cliente)
@@ -66,7 +66,12 @@ def main():
                 jogador2), args=(jogador2, socket_cliente))
             jogador2_thread.start()
 
-            define_pokemons(jogador2)
+            jogador1_thread.join()
+            jogador2_thread.join()
+
+            jogador1.define_pokemons()
+            jogador2.define_pokemons()
+
 
 
 if __name__ == "__main__":
