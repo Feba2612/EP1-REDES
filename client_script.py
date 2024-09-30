@@ -7,15 +7,56 @@ PORT = 4242
 SERVER = socket.gethostbyname(socket.gethostname())
 ADDR = (SERVER, PORT)
 
+class Pokemon:
+    def __init__(self, nome, tipo, vida, fraqueza, vantagem):
+        self.nome = nome
+        self.tipo = tipo
+        self._vida = vida
+        self.fraqueza = fraqueza
+        self.vantagem = vantagem
+
+    def vida(self, valor):
+        if valor < 0:
+            self._vida = 0
+        else:
+            self._vida = valor
+
+    def perderVida(self, valor):
+        self._vida = self._vida - valor
+        if self._vida < 0:
+            self._vida = 0
+        
+    # Método para verificar se o Pokémon está morto
+    def morrer(self):
+        if self._vida <= 0:
+            print(f"{self.nome} morreu!")
+        else:
+            print(f"{self.nome} ainda está vivo com {self._vida} de vida.")
+
+    def __str__(self):
+        return (f"Nome: {self.nome}, Tipo: {self.tipo}, Vida: {self.vida}, "
+                f"Fraqueza: {self.fraqueza}, Vantagem: {self.vantagem}")
+
+# Definindo Pokémon com atributos específicos
+pokemons = [
+    Pokemon(nome="Charmander", tipo="Fogo", vida=100, fraqueza="Água", vantagem="Planta"),
+    Pokemon(nome="Bulbasaur", tipo="Planta", vida=100, fraqueza="Fogo", vantagem="Água"),
+    Pokemon(nome="Squirtle", tipo="Água", vida=100, fraqueza="Elétrico", vantagem="Fogo"),
+    Pokemon(nome="Pikachu", tipo="Elétrico", vida=100, fraqueza="Terra", vantagem="Água")
+]
+
 def escolher_pokemons(cliente):
-    pokemons = [
-        inquirer.Checkbox("pokemons", message="Escolha seus pokémons (max 2)", choices=[
-            "Charmander", "Bulbasaur", "Squirtle", "Pikachu"
-        ], default=[])
+    choices = [str(pokemon) for pokemon in pokemons]
+    pokemons_prompt = [
+        inquirer.Checkbox("pokemons", message="Escolha seus pokémons (max 2)", choices=choices, default=[])
     ]
 
-    pokemons_escolhidos = inquirer.prompt(pokemons, theme=BlueComposure())
-    pokemons_str = ','.join(pokemons_escolhidos['pokemons'])
+    pokemons_escolhidos = inquirer.prompt(pokemons_prompt, theme=BlueComposure())
+    # Convertendo nomes dos Pokémon selecionados para objetos Pokemon
+    nomes_escolhidos = pokemons_escolhidos['pokemons']
+    pokemons_selecionados = [pokemon for pokemon in pokemons if pokemon.nome in nomes_escolhidos]
+    
+    pokemons_str = ','.join([pokemon.nome for pokemon in pokemons_selecionados])
     cliente.send(f"pokemons_escolhidos|{pokemons_str}".encode("utf-8"))
 
     resposta = cliente.recv(1024).decode("utf-8")
@@ -51,5 +92,5 @@ if __name__ == "__main__":
     while True:
         escolher_pokemons(cliente)
         escolher_acao(cliente)
-        # Recebe uma mensagem de "próximo turno" ou "pronto para próximo jogador" se necessário
-        cliente.recv(1024)  # Aqui você pode aguardar uma confirmação do servidor
+        
+        cliente.recv(1024)  
