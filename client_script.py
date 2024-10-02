@@ -46,7 +46,7 @@ pokemons = [
 ]
 
 def escolher_pokemons(cliente):
-    choices = [str(pokemon) for pokemon in pokemons]
+    choices = [pokemon.nome for pokemon in pokemons]
     pokemons_prompt = [
         inquirer.Checkbox("pokemons", message="Escolha seus pokémons (max 2)", choices=choices, default=[])
     ]
